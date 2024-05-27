@@ -9,12 +9,14 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-community/datetimepicker": "^8.0.1",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.9.26",
     "expo": "~51.0.8",
     "expo-status-bar": "~1.12.1",
     "react": "18.2.0",
     "react-native": "0.74.1",
+    "react-native-country-picker-modal": "^2.0.0",
     "react-native-date-picker": "^5.0.3",
     "react-native-modal-datetime-picker": "^17.1.0",
     "react-native-modal-selector": "^2.1.2",
