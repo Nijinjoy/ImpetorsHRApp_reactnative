@@ -18,7 +18,7 @@ const NumberTextinputComponent = (props) => {
 
     return (
         <View style={{ borderWidth: 1, borderRadius: WIDTH * 0.02, padding: HEIGHT * 0.015, flexDirection: "row", ...containerStyle, borderColor: colors.grey, backgroundColor: colors.lightgrey }}>
-            <TouchableOpacity onPress={() => setCountryModalVisible(true)} style={{ justifyContent: "center", alignItems: "center", flexDirection: "row", backgroundColor: colors.whiteGrey, padding: WIDTH * 0.02, borderRadius: WIDTH * 0.02, }}>
+            <TouchableOpacity onPress={() => setCountryModalVisible(true)} style={{ justifyContent: "center", alignItems: "center", flexDirection: "row", backgroundColor: colors.whiteGrey, borderRadius: WIDTH * 0.02, paddingVertical: WIDTH * 0.02, paddingHorizontal: WIDTH * 0.01, }}>
                 <CountryPicker
                     visible={countryModalVisible}
                     onClose={() => setCountryModalVisible(false)}

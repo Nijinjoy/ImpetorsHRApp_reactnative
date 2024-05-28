@@ -65,6 +65,7 @@ const PersonalDetailScreen = () => {
                         buttonValue="Next"
                         textStyle={styles.buttonText}
                         buttonStyle={styles.nextButton}
+                        onPress={() => navigation.navigate("DocumentScreen")}
                     />
                 </View>
             </View>
