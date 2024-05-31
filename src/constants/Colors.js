@@ -11,7 +11,7 @@ const colors = {
     lightAsh: "#F7F7F7",
     black: "#1E232C",
     whiteGrey: "#E2E4E6",
-
+    lightBlack: "#585858"
 }
 
 

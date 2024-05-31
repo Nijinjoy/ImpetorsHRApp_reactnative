@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Image, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { HEIGHT, WIDTH } from '../constants/Dimension';
 import colors from '../constants/Colors';
-import { backarrow } from '../assets/images';
 import CountryPicker from 'react-native-country-picker-modal';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const NumberTextinputComponent = (props) => {
     const { placeholder, containerStyle } = props;
-    const [countryCode, setCountryCode] = useState('US');
+    const [countryCode, setCountryCode] = useState('GB');
+    const [callingCode, setCallingCode] = useState('44'); 
     const [countryModalVisible, setCountryModalVisible] = useState(false);
 
     const onSelectCountry = (country) => {
         setCountryCode(country.cca2);
+        setCallingCode(country.callingCode[0]);
         setCountryModalVisible(false);
     };
 
@@ -25,17 +26,18 @@ const NumberTextinputComponent = (props) => {
                     onSelect={onSelectCountry}
                     withFlag
                     withFilter
+                    withCallingCode
                     withAlphaFilter
                     countryCode={countryCode}
                     translation="eng"
                 />
-                <Text style={{ right: WIDTH * 0.02 }}>{countryCode}</Text>
+                <Text style={{ right: WIDTH * 0.02 }}>+{callingCode}</Text>
                 <MaterialIcons name="keyboard-arrow-down" size={25} color={colors.black} style={{ right: WIDTH * 0.01 }} />
             </TouchableOpacity>
             <TextInput
                 keyboardType="numeric"
                 placeholder={placeholder}
-                style={{ marginHorizontal: WIDTH * 0.04 }}
+                style={{ marginHorizontal: WIDTH * 0.04, flex: 1 }}
             />
         </View>
     );

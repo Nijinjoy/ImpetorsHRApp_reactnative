@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import BackbuttonComponent from '../components/BackbuttonComponent';
@@ -14,6 +14,62 @@ import CountryPicker from 'react-native-country-picker-modal';
 const PersonalDetailScreen = () => {
     const [isSameNumber, setIsSameNumber] = useState(false);
     const navigation = useNavigation();
+    const [postcode, setPostcode] = useState('');
+    const [addressSuggestions, setAddressSuggestions] = useState([]);
+    const [isLookupPerformed, setIsLookupPerformed] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [selectedAddress, setSelectedAddress] = useState('');
+    const [showAddressInput, setShowAddressInput] = useState(false);
+
+    // Update the handleLookupPress function to process address suggestions
+    const handleLookupPress = async () => {
+        try {
+            console.log('Entered Postcode:', postcode);
+            if (!postcode || postcode.trim() === '') {
+                throw new Error('Postcode is required.');
+            }
+            const method = 'find';
+            await fetchAddresses(method, postcode);
+        } catch (error) {
+            console.error('Error fetching addresses:', error.message);
+        }
+    };
+
+    const fetchAddresses = async (method, postcode) => {
+        try {
+            const trimmedPostcode = postcode.trim();
+            const encodedPostcode = encodeURIComponent(trimmedPostcode);
+            const apiKey = 'a1s6ILYqIEqFkF82GY01SA36009';
+            const url = `https://api.getAddress.io/${method}/${encodedPostcode}?api-key=${apiKey}`;
+            console.log('Fetching URL:', url);
+            const response = await fetch(url, {
+                method: 'GET',
+            });
+            console.log('HTTP Status:', response.status);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response text:', errorText);
+                throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
+            }
+            const data = await response.json();
+            console.log('Address Data:', data);
+
+            // Process address suggestions to remove multiple consecutive commas
+            const addressesWithoutCommas = data.addresses.map(address => address.replace(/,{2,}/g, ','));
+
+            setAddressSuggestions(addressesWithoutCommas);
+            setIsLookupPerformed(true);
+            setShowDropdown(true);
+            setShowAddressInput(true);
+        } catch (error) {
+            console.error('Error fetching addresses:', error.message);
+        }
+    };
+
+    const truncateAddress = (address, maxLength) => {
+        if (address.length <= maxLength) return address;
+        return address.substring(0, maxLength) + '...';
+    };
 
     return (
         <View style={styles.mainContainer}>
@@ -47,20 +103,48 @@ const PersonalDetailScreen = () => {
                     <TextInputComponent
                         placeholder="Postcode"
                         width={WIDTH * 0.9}
+                        value={postcode}
+                        onChangeText={setPostcode}
                         rightComponent={
-                            <View>
+                            <TouchableOpacity onPress={handleLookupPress}>
                                 <Text style={styles.lookupText}>Lookup</Text>
-                            </View>
+                            </TouchableOpacity>
                         }
                         rightStyle={styles.lookupButton}
                         containerStyle={styles.inputSpacing}
                     />
-                    <TextInputComponent
-                        placeholder="Select Address"
-                        width={WIDTH * 0.9}
-                        rightComponent={<MaterialIcons name="keyboard-arrow-down" size={30} color={colors.black} />}
-                        containerStyle={styles.inputSpacing}
-                    />
+                    {showAddressInput && (
+                        <TextInputComponent
+                            placeholder="Select Address"
+                            value={truncateAddress(selectedAddress, 35)}
+                            editable={false}
+                            width={WIDTH * 0.9}
+                            rightComponent={
+                                <TouchableOpacity onPress={() => setShowDropdown(!showDropdown)}>
+                                    <MaterialIcons name="keyboard-arrow-down" size={30} color={colors.black} />
+                                </TouchableOpacity>
+                            }
+                            containerStyle={styles.inputSpacing}
+                        />
+                    )}
+
+                    <View style={styles.dropdownContainer}>
+                        {showDropdown && (
+                            <FlatList
+                                data={addressSuggestions}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity style={styles.addressSuggestionItem} onPress={() => {
+                                        setSelectedAddress(item.replace(/,/g, ''));
+                                        setShowDropdown(false);
+                                    }}>
+                                        <Text>{item}</Text>
+                                    </TouchableOpacity>
+                                )}
+                                keyExtractor={(item, index) => index.toString()}
+                                contentContainerStyle={{ flexGrow: 1 }}
+                            />
+                        )}
+                    </View>
                     <ButtonComponent
                         buttonValue="Next"
                         textStyle={styles.buttonText}
@@ -141,5 +225,25 @@ const styles = StyleSheet.create({
         backgroundColor: colors.orange,
         marginTop: HEIGHT * 0.05,
     },
+    addressSuggestionItem: {
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.lightgrey,
+    },
+    addressInputContainer: {
+        marginTop: HEIGHT * 0.02,
+        marginBottom: HEIGHT * 0.02,
+    },
+    dropdownContainer: {
+        overflow: 'scroll',
+        marginTop: HEIGHT * 0.01,
+        maxHeight: HEIGHT * 0.15,
+        // borderWidth: 1,
+        borderColor: colors.lightgrey,
+        borderRadius: WIDTH * 0.02,
+        backgroundColor: colors.white,
+        // elevation: 2
+    }
+
 });
 

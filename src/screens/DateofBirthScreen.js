@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
         padding: WIDTH * 0.05,
         borderWidth: 2,
         borderColor: '#ccc',
-        borderRadius: 5,
+        borderRadius: WIDTH * 0.03,
         marginVertical: 10,
         alignItems: 'center',
         marginRight: WIDTH * 0.05,

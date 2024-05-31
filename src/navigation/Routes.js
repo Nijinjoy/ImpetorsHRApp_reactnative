@@ -6,6 +6,7 @@ import SplashScreen from '../screens/SplashScreen'
 import DateofBirthScreen from '../screens/DateofBirthScreen'
 import PersonalDetailScreen from '../screens/PersonalDetailScreen'
 import DocumentScreen from '../screens/DocumentScreen'
+import PassportScreen from '../screens/PassportScreen'
 
 
 const Stack = createNativeStackNavigator();
@@ -18,6 +19,7 @@ const Routes = () => {
                 <Stack.Screen name='DateofBirthScreen' component={DateofBirthScreen} />
                 <Stack.Screen name='PersonalDetailScreen' component={PersonalDetailScreen} />
                 <Stack.Screen name='DocumentScreen' component={DocumentScreen} />
+                <Stack.Screen name='PassportScreen' component={PassportScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     )
@@ -25,4 +27,4 @@ const Routes = () => {
 
 export default Routes
 
-//DocumentScreen
+//PassportScreen
