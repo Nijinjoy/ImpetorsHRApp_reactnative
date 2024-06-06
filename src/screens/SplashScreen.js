@@ -10,10 +10,9 @@ const SplashScreen = () => {
 
     useEffect(() => {
         setTimeout(() => {
-            navigation.navigate("DateofBirthScreen")
+            navigation.navigate("PassportScreen")
         }, 4000)
     }, [])
-
 
     return (
         <View style={styles.container}>

@@ -17,8 +17,7 @@ export default UploadComponent;
 const styles = StyleSheet.create({
     mainContainer: {
         borderWidth: 1,
-        flex: 1,
-        width: WIDTH * 0.43,
+        width: WIDTH * 0.42,
         flexDirection: "row",
         justifyContent: "center",
         alignItems: 'center',

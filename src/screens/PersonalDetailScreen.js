@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import BackbuttonComponent from '../components/BackbuttonComponent';
@@ -21,7 +21,6 @@ const PersonalDetailScreen = () => {
     const [selectedAddress, setSelectedAddress] = useState('');
     const [showAddressInput, setShowAddressInput] = useState(false);
 
-    // Update the handleLookupPress function to process address suggestions
     const handleLookupPress = async () => {
         try {
             console.log('Entered Postcode:', postcode);
@@ -54,10 +53,13 @@ const PersonalDetailScreen = () => {
             const data = await response.json();
             console.log('Address Data:', data);
 
-            // Process address suggestions to remove multiple consecutive commas
-            const addressesWithoutCommas = data.addresses.map(address => address.replace(/,{2,}/g, ','));
+            const formattedAddresses = data.addresses.map(address => {
+                const parts = address.split(',').map(part => part.trim());
+                const filteredParts = parts.filter(part => part !== '');
+                return filteredParts.join(', ');
+            });
 
-            setAddressSuggestions(addressesWithoutCommas);
+            setAddressSuggestions(formattedAddresses);
             setIsLookupPerformed(true);
             setShowDropdown(true);
             setShowAddressInput(true);
@@ -72,88 +74,97 @@ const PersonalDetailScreen = () => {
     };
 
     return (
-        <View style={styles.mainContainer}>
-            <View style={styles.subContainer}>
-                <BackbuttonComponent
-                    backarrow={backarrow}
-                    onPress={() => navigation.goBack()}
-                    containStyle={styles.buttonContainerStyle}
-                />
-                <Text style={styles.headerText}>Update Your Personal Details</Text>
-                <View style={styles.formContainer}>
-                    <NumberTextinputComponent
-                    placeholder="Phone Number"
-                    />
-                    <View style={styles.checkboxContainer}>
-                        <TouchableOpacity
-                            style={[styles.checkbox, isSameNumber && styles.checkedBackground]}
-                            onPress={() => setIsSameNumber(!isSameNumber)}
-                        >
-                            {isSameNumber && <MaterialIcons name="check" size={20} color={colors.white} />}
-                        </TouchableOpacity>
-                        <Text style={styles.checkboxLabel}>Is this your WhatsApp Number</Text>
-                    </View>
-                    {!isSameNumber && (
-                        <NumberTextinputComponent
-                            placeholder="WhatsApp Number"
-                            containerStyle={styles.additionalInput}
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
+            style={{ flex: 1 }}
+        >
+            <ScrollView contentContainerStyle={styles.scrollViewContent}>
+                <View style={styles.mainContainer}>
+                    <View style={styles.subContainer}>
+                        <BackbuttonComponent
+                            backarrow={backarrow}
+                            onPress={() => navigation.goBack()}
+                            containStyle={styles.buttonContainerStyle}
                         />
-                    )}
-                    <Text style={styles.addressLabel}>Your Current Address</Text>
-                    <TextInputComponent
-                        placeholder="Postcode"
-                        width={WIDTH * 0.9}
-                        value={postcode}
-                        onChangeText={setPostcode}
-                        rightComponent={
-                            <TouchableOpacity onPress={handleLookupPress}>
-                                <Text style={styles.lookupText}>Lookup</Text>
-                            </TouchableOpacity>
-                        }
-                        rightStyle={styles.lookupButton}
-                        containerStyle={styles.inputSpacing}
-                    />
-                    {showAddressInput && (
-                        <TextInputComponent
-                            placeholder="Select Address"
-                            value={truncateAddress(selectedAddress, 35)}
-                            editable={false}
-                            width={WIDTH * 0.9}
-                            rightComponent={
-                                <TouchableOpacity onPress={() => setShowDropdown(!showDropdown)}>
-                                    <MaterialIcons name="keyboard-arrow-down" size={30} color={colors.black} />
-                                </TouchableOpacity>
-                            }
-                            containerStyle={styles.inputSpacing}
-                        />
-                    )}
-
-                    <View style={styles.dropdownContainer}>
-                        {showDropdown && (
-                            <FlatList
-                                data={addressSuggestions}
-                                renderItem={({ item }) => (
-                                    <TouchableOpacity style={styles.addressSuggestionItem} onPress={() => {
-                                        setSelectedAddress(item.replace(/,/g, ''));
-                                        setShowDropdown(false);
-                                    }}>
-                                        <Text>{item}</Text>
-                                    </TouchableOpacity>
-                                )}
-                                keyExtractor={(item, index) => index.toString()}
-                                contentContainerStyle={{ flexGrow: 1 }}
+                        <Text style={styles.headerText}>Update Your Personal Details</Text>
+                        <View style={styles.formContainer}>
+                            <NumberTextinputComponent
+                                placeholder="Phone Number"
                             />
-                        )}
+                            <View style={styles.checkboxContainer}>
+                                <TouchableOpacity
+                                    style={[styles.checkbox, isSameNumber && styles.checkedBackground]}
+                                    onPress={() => setIsSameNumber(!isSameNumber)}
+                                >
+                                    {isSameNumber && <MaterialIcons name="check" size={20} color={colors.white} />}
+                                </TouchableOpacity>
+                                <Text style={styles.checkboxLabel}>Is this your WhatsApp Number</Text>
+                            </View>
+                            {!isSameNumber && (
+                                <NumberTextinputComponent
+                                    placeholder="WhatsApp Number"
+                                    containerStyle={styles.additionalInput}
+                                />
+                            )}
+                            <Text style={styles.addressLabel}>Your Current Address</Text>
+                            <TextInputComponent
+                                placeholder="Postcode"
+                                width={WIDTH * 0.9}
+                                value={postcode}
+                                onChangeText={setPostcode}
+                                rightComponent={
+                                    <TouchableOpacity onPress={handleLookupPress} style={{ borderWidth: 1 }}>
+                                        <Text style={styles.lookupText}>Lookup</Text>
+                                    </TouchableOpacity>
+                                }
+                                rightStyle={styles.lookupButton}
+                                containerStyle={styles.inputSpacing}
+                            />
+                            {showAddressInput && (
+                                <TextInputComponent
+                                    placeholder="Select Address"
+                                    value={truncateAddress(selectedAddress, 35)}
+                                    editable={false}
+                                    width={WIDTH * 0.9}
+                                    rightComponent={
+                                        <TouchableOpacity onPress={() => setShowDropdown(!showDropdown)}>
+                                            <MaterialIcons name="keyboard-arrow-down" size={30} color={colors.black} />
+                                        </TouchableOpacity>
+                                    }
+                                    containerStyle={styles.inputSpacing}
+                                />
+                            )}
+
+                            <View style={styles.dropdownContainer}>
+                                {showDropdown && (
+                                    <FlatList
+                                        data={addressSuggestions}
+                                        renderItem={({ item }) => (
+                                            <TouchableOpacity style={styles.addressSuggestionItem} onPress={() => {
+                                                setSelectedAddress(item.replace(/,/g, ''));
+                                                setShowDropdown(false);
+                                            }}>
+                                                <Text>{item}</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                        keyExtractor={(item, index) => index.toString()}
+                                        contentContainerStyle={{ flexGrow: 1 }}
+                                    />
+                                )}
+                            </View>
+                            <ButtonComponent
+                                buttonValue="Next"
+                                textStyle={styles.buttonText}
+                                buttonStyle
+                                ={styles.nextButton}
+                                onPress={() => navigation.navigate("DocumentScreen")}
+                            />
+                        </View>
                     </View>
-                    <ButtonComponent
-                        buttonValue="Next"
-                        textStyle={styles.buttonText}
-                        buttonStyle={styles.nextButton}
-                        onPress={() => navigation.navigate("DocumentScreen")}
-                    />
                 </View>
-            </View>
-        </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 };
 
@@ -163,6 +174,10 @@ const styles = StyleSheet.create({
     mainContainer: {
         backgroundColor: colors.white,
         flex: 1,
+    },
+    scrollViewContent: {
+        flexGrow: 1,
+        justifyContent: 'space-between',
     },
     subContainer: {
         marginHorizontal: WIDTH * 0.05,
@@ -210,6 +225,7 @@ const styles = StyleSheet.create({
         color: colors.white,
     },
     lookupButton: {
+        borderWidth: 1,
         backgroundColor: colors.orange,
         padding: WIDTH * 0.03,
         borderRadius: WIDTH * 0.02,
@@ -238,12 +254,9 @@ const styles = StyleSheet.create({
         overflow: 'scroll',
         marginTop: HEIGHT * 0.01,
         maxHeight: HEIGHT * 0.15,
-        // borderWidth: 1,
         borderColor: colors.lightgrey,
         borderRadius: WIDTH * 0.02,
         backgroundColor: colors.white,
-        // elevation: 2
     }
 
 });
-

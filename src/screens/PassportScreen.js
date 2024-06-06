@@ -1,35 +1,25 @@
-import { View, Text, StyleSheet, FlatList, Image, ScrollView, Pressable, Alert, Modal, Button } from 'react-native'
-import React, { useState } from 'react'
-import colors from '../constants/Colors'
-import BackbuttonComponent from '../components/BackbuttonComponent'
-import { backarrow, camera, cross, mark, passportdo, passportdont, upload } from '../assets/images'
-import { HEIGHT, WIDTH } from '../constants/Dimension'
-import { useNavigation } from '@react-navigation/native'
-import TextInputComponent from '../components/TextInputComponent'
-import ButtonComponent from '../components/ButtonComponent'
-import { MaterialIcons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, Image, ScrollView, Pressable, Alert, Modal, Button, Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import UploadComponent from '../components/UploadComponent'
 import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
+import { MaterialIcons } from '@expo/vector-icons';
+import colors from '../constants/Colors';
+import { HEIGHT, WIDTH } from '../constants/Dimension';
+import BackbuttonComponent from '../components/BackbuttonComponent';
+import TextInputComponent from '../components/TextInputComponent';
+import ButtonComponent from '../components/ButtonComponent';
+import UploadComponent from '../components/UploadComponent';
+import { backarrow, camera, cross, mark, passportdo, passportdont, upload } from '../assets/images';
+import { generateRandomFilename } from '../constants/Helpers';
+import WebView from 'react-native-webview';
+
+
 
 const passportInstruction = [
-    {
-        id: 1,
-        image: passportdo,
-        text: "Do it",
-        markIcon: mark
-    },
-    {
-        id: 2,
-        image: passportdont,
-        text: "Don't",
-        markIcon: cross
-    }
-]
-
-const uploadComponentsData = [
-    { id: 1, icon: camera, text: 'Take Picture' },
-    { id: 2, icon: upload, text: 'Upload Now' }
+    { id: 1, image: passportdo, text: "Do it", markIcon: mark },
+    { id: 2, image: passportdont, text: "Don't", markIcon: cross }
 ];
 
 const instructionsData = [
@@ -38,19 +28,17 @@ const instructionsData = [
     { id: 3, text: "Avoid glare or obstructions for accurate document capture" }
 ];
 
-
 const PassportScreen = () => {
-    const navigation = useNavigation()
+    const navigation = useNavigation();
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [selectedDate, setSelectedDate] = useState('');
     const [fileFormat, setFileFormat] = useState(null);
     const [imageUri, setImageUri] = useState(null);
     const [imageFileName, setImageFileName] = useState(null);
     const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+    const [docName, setDocName] = useState(null);
+    const [isPdfViewerVisible, setIsPdfViewerVisible] = useState(false);
 
-    console.log("fileFormat===>", fileFormat);
-    console.log("imageFileName===>", imageFileName);
-    console.log("imageUri===>", imageUri);
 
     const showDatePicker = () => {
         setDatePickerVisibility(true);
@@ -66,10 +54,9 @@ const PassportScreen = () => {
         hideDatePicker();
     };
 
-
     const handleCameraPress = async () => {
         const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-        if (permissionResult.granted === false) {
+        if (!permissionResult.granted) {
             Alert.alert('Permission to access camera required.');
             return;
         }
@@ -82,20 +69,14 @@ const PassportScreen = () => {
             base64: false,
         });
 
-        console.log('Image Result:', imageResult); // Log the result to check the structure
-
-        if (!imageResult.cancelled) {
-            const { uri, fileName, mimeType } = imageResult.assets[0]; // Destructure the first asset
+        if (!imageResult.canceled) {
+            const { uri, mimeType } = imageResult.assets[0];
             if (uri) {
                 setFileFormat(mimeType || 'image/jpeg');
                 setImageUri(uri);
-                setImageFileName(fileName);
-
-                console.log('File Format:', mimeType || 'image/jpeg');
-                console.log('Image URI:', uri);
-                console.log('Image File Name:', fileName);
-
-                setIsPreviewVisible(true); // Show the image preview
+                const newFileName = generateRandomFilename();
+                setImageFileName(newFileName);
+                setIsPreviewVisible(true);
             } else {
                 Alert.alert('No URI found in the captured image.');
             }
@@ -105,8 +86,40 @@ const PassportScreen = () => {
     };
 
 
+    const handleDocumentPress = async () => {
+        try {
+            const result = await DocumentPicker.getDocumentAsync({
+                type: ['application/pdf', 'image/*'],
+            });
+
+            console.log('DocumentPicker result:', result);
+
+            if (!result.canceled && result.assets && result.assets.length > 0) {
+                const { mimeType, name, uri } = result.assets[0];
+                console.log('Document details:', { name, uri, mimeType });
+
+                if (uri) {
+                    setDocName(name);
+                    setImageUri(uri);
+                    setFileFormat(mimeType || 'application/pdf');
+                    setIsPreviewVisible(true);
+                } else {
+                    Alert.alert('No URI found in the uploaded document.');
+                }
+            } else if (result.canceled) {
+                console.log('Document upload cancelled by the user.');
+                Alert.alert('Document upload cancelled.');
+            }
+        } catch (error) {
+            console.error('Error during document upload:', error);
+            Alert.alert('An error occurred during document upload.');
+        }
+    };
+
+
     const togglePreviewModal = () => {
         setIsPreviewVisible(!isPreviewVisible);
+        setIsPdfViewerVisible(false); 
     };
 
     return (
@@ -137,24 +150,22 @@ const PassportScreen = () => {
                     <FlatList
                         data={passportInstruction}
                         style={styles.flatlistStyle}
-                        keyExtractor={(item) => item.id}
-                        renderItem={({ item }) => {
-                            return (
-                                <Pressable style={styles.imageContainer}>
-                                    <Image source={item.image} style={styles.imageStyle} resizeMode='contain' />
-                                    <View style={styles.contentStyle}>
-                                        <Image source={item.markIcon} resizeMode='contain' />
-                                        <Text style={{ marginLeft: WIDTH * 0.02 }}>{item.text}</Text>
-                                    </View>
-                                </Pressable>
-                            )
-                        }}
+                        keyExtractor={(item) => item.id.toString()}
+                        renderItem={({ item }) => (
+                            <Pressable style={styles.imageContainer}>
+                                <Image source={item.image} style={styles.imageStyle} resizeMode='contain' />
+                                <View style={styles.contentStyle}>
+                                    <Image source={item.markIcon} resizeMode='contain' />
+                                    <Text style={{ marginLeft: WIDTH * 0.02 }}>{item.text}</Text>
+                                </View>
+                            </Pressable>
+                        )}
                         numColumns={2}
                     />
                     <Text style={styles.documentText}>Document Details</Text>
-                    <TextInputComponent
-                        placeholder="Your Passport Number"
-                    />
+                    <TextInputComponent placeholder="Your Passport Number" />
+                    <TextInputComponent keyboardType="numeric" placeholder="Phone Number" />
+                    <TextInputComponent containerStyle={{ height: HEIGHT * 0.15 }} placeholder="Contact Address" />
                     <TextInputComponent
                         placeholder="Passport Expiry"
                         value={selectedDate}
@@ -165,6 +176,7 @@ const PassportScreen = () => {
                             </Pressable>
                         }
                     />
+
                     <DateTimePickerModal
                         isVisible={isDatePickerVisible}
                         mode="date"
@@ -175,29 +187,28 @@ const PassportScreen = () => {
                         confirmTextStyle={styles.confirmText}
                         cancelTextStyle={styles.cancelText}
                     />
-                    <FlatList
-                        data={uploadComponentsData}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={({ item }) => (
-                            <Pressable style={styles.uploadContainer} onPress={() => item.text === 'Take Picture' ? handleCameraPress() : null}>
-                                <UploadComponent icon={item.icon} text={item.text} onPress={() => item.text === 'Take Picture' ? handleCameraPress() : null} />
-                            </Pressable>
-                        )}
-                        numColumns={2}
-                    />
 
-                    <View style={{ flexDirection: "row" }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: HEIGHT * 0.02 }}>
+                        <UploadComponent icon={camera} text="Take Picture" onPress={handleCameraPress} />
+                        <UploadComponent icon={upload} text="Upload Now" onPress={handleDocumentPress} />
+                    </View>
+
+                    <View style={{ flexDirection: "row", alignItems: 'center', marginTop: HEIGHT * 0.01 }}>
+                        <MaterialIcons name="insert-drive-file" size={20} color={colors.orange} />
                         {imageFileName && (
                             <Text style={styles.fileFormatText}>{imageFileName}</Text>
                         )}
-                        <Pressable onPress={togglePreviewModal}>
-                            <Text style={{ color: colors.orange }}>Preview</Text>
+                        {docName && (
+                            <Text style={styles.fileFormatText}>{docName}</Text>
+                        )}
+                        <Pressable onPress={() => setIsPdfViewerVisible(true)}>
+                            <Text style={{ color: colors.blue, marginLeft: HEIGHT * 0.02 }}>Preview</Text>
                         </Pressable>
                     </View>
 
-
                     <ButtonComponent
                         buttonValue="Next"
+                        onPress={() => navigation.navigate("PolicyScreen")}
                         textStyle={styles.buttonText}
                         buttonStyle={styles.nextButton}
                     />
@@ -205,23 +216,32 @@ const PassportScreen = () => {
             </ScrollView>
 
             <Modal
-                animationType="slide"
+                animationType="fade"
                 transparent={true}
-                visible={isPreviewVisible}
-                onRequestClose={() => setIsPreviewVisible(false)}
+                visible={isPdfViewerVisible}
+                onRequestClose={() => setIsPdfViewerVisible(false)}
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalHeaderText}>Preview Image</Text>
+                        <Text style={styles.modalHeaderText}>Preview Document</Text>
                         <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="contain" />
-                        <Button title="Close" onPress={() => setIsPreviewVisible(false)} />
+
+                        {imageUri && (
+                            <WebView
+                                source={{ html: `<embed src="${imageUri}" type="application/pdf" width="100%" height="100%" />` }}
+                                style={{ flex: 1 }}
+                            />
+                        )}
+                        <Pressable style={{ backgroundColor: colors.orange, borderWidth: 0, padding: WIDTH * 0.03, borderRadius: 10 }} onPress={() => setIsPdfViewerVisible(false)}>
+                            <Text>Close</Text>
+                        </Pressable>
+                        {/* <Button title="Close" onPress={() => setIsPdfViewerVisible(false)} /> */}
                     </View>
                 </View>
             </Modal>
-
         </View>
-    )
-}
+    );
+};
 
 const styles = StyleSheet.create({
     mainContainer: {
@@ -235,7 +255,8 @@ const styles = StyleSheet.create({
         marginTop: HEIGHT * 0.08,
     },
     scrollContainer: {
-        flexGrow: 1
+        flexGrow: 1,
+        paddingBottom: HEIGHT * 0.05
     },
     headerText: {
         fontSize: 27,
@@ -249,6 +270,8 @@ const styles = StyleSheet.create({
     lineContainer: {
         flexDirection: 'row',
         alignItems: 'flex-start',
+        justifyContent: "center",
+        alignItems: "center",
         marginBottom: HEIGHT * 0.01,
     },
     bulletPoint: {
@@ -308,13 +331,14 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+
     },
     modalContent: {
-        backgroundColor: colors.white,
-        borderRadius: 10,
-        padding: 20,
-        alignItems: 'center',
+        height: HEIGHT * 0.7,
+        width: WIDTH * 0.9,
+        backgroundColor: colors.lightBlack,
+        borderRadius: WIDTH * 0.02,
+        alignItems: "center"
     },
     modalHeaderText: {
         fontSize: 20,
@@ -326,13 +350,24 @@ const styles = StyleSheet.create({
         height: HEIGHT * 0.5,
         marginBottom: 20,
     },
+    pdfPreview: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: HEIGHT * 0.5,
+        marginBottom: 20,
+    },
+    pdfText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
     buttonContainer: {
         width: '100%',
         alignItems: 'center',
     },
-})
+    pickerContainer: {
+        backgroundColor: colors.orange,
+        color: colors.orange
+    }
+});
 
 export default PassportScreen;
-
-
-

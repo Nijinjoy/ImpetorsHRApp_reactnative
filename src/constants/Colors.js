@@ -11,7 +11,10 @@ const colors = {
     lightAsh: "#F7F7F7",
     black: "#1E232C",
     whiteGrey: "#E2E4E6",
-    lightBlack: "#585858"
+    lightBlack: "#585858",
+    blue: "#0F91D2",
+    padColor: "#F1F1F1"
+
 }
 
 

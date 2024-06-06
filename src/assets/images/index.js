@@ -9,5 +9,7 @@ import mark from '../images/mark/mark.png'
 import cross from '../images/cross/cross.png'
 import camera from '../images/camera/camera.png'
 import upload from '../images/upload/upload.png'
+import pen from '../images/pen/pen.png'
+import appIcon from '../images/appIcon/appIcon.png'
 
-export { splashLogo, backarrow, passport, brp, nidoc, passportdo, passportdont, mark, cross, camera, upload }
+export { splashLogo, backarrow, passport, brp, nidoc, passportdo, passportdont, mark, cross, camera, upload, pen, appIcon }
