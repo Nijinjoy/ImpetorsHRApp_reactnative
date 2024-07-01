@@ -11,5 +11,15 @@ import camera from '../images/camera/camera.png'
 import upload from '../images/upload/upload.png'
 import pen from '../images/pen/pen.png'
 import appIcon from '../images/appIcon/appIcon.png'
+import google from '../images/google/google.png'
+import location from '../images/location/location.png'
+import scan from '../images/scan/scan.png'
+import logo from '../images/logo/logo.png'
+import handscan from '../images/handscan/handscan.png'
+import uploadcamera from '../images/uploadcamera/uploadcamera.png'
+import avatar from '../images/avatar/avatar.png'
+import avatar2 from '../images/avatar2/avatar2.png'
+import avatar3 from '../images/avatar3/avatar3.png'
+import avatar4 from '../images/avatar4/avatar4.png'
 
-export { splashLogo, backarrow, passport, brp, nidoc, passportdo, passportdont, mark, cross, camera, upload, pen, appIcon }
+export { splashLogo, backarrow, passport, brp, nidoc, passportdo, passportdont, mark, cross, camera, upload, pen, appIcon, google, location, scan, logo, handscan, uploadcamera, avatar, avatar2, avatar3, avatar4 }

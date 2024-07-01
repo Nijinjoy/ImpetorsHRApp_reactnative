@@ -1,8 +1,12 @@
 {
   "expo": {
     "name": "ImpetorsHRConnect",
-    "slug": "ImpetorsHRConnect",
+    "slug": "impetors-hr-connect",
     "version": "1.0.0",
+    "scheme":"com.impetors.ImpetorsHRConnect",
+    "platforms": [
+      "android"
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -12,16 +16,24 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.impetors.ImpetorsHRConnect"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.impetors.ImpetorsHRConnect"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ea43aae3-5e48-42b4-bd94-73712fc21de0"
+      }
+    },
+    "owner": "nijin_1999"
   }
 }

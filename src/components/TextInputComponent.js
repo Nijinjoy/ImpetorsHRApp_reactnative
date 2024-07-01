@@ -3,18 +3,20 @@ import { TextInput, StyleSheet, View, Pressable } from 'react-native';
 import { HEIGHT, WIDTH } from '../constants/Dimension';
 import colors from '../constants/Colors';
 
-const TextInputComponent = ({ containerStyle, placeholder, keyboardType, value, editable, rightComponent, placeholderTextColor }) => {
+const TextInputComponent = ({ containerStyle, placeholder, keyboardType, value, editable, rightComponent, placeholderTextColor, secureTextEntry, onChangeText }) => {
     return (
         <View style={[styles.container, containerStyle]}>
             <TextInput
                 style={styles.textInput}
                 placeholder={placeholder}
+                // style={{ fontSize: 20 }}
                 keyboardType={keyboardType}
+                secureTextEntry={secureTextEntry}
                 value={value}
                 editable={editable}
+                onChangeText={onChangeText}
                 placeholderTextColor={placeholderTextColor}
-                multiline
-                textAlignVertical="top"
+                multiline={false}
             />
             {rightComponent && (
                 <Pressable style={styles.rightComponentContainer}>
@@ -54,43 +56,3 @@ const styles = StyleSheet.create({
 });
 
 export default TextInputComponent;
-
-
-
-
-
-
-
-
-
-// import { View, Text, TextInput, Image, Pressable } from 'react-native'
-// import React from 'react'
-// import { HEIGHT, WIDTH } from '../constants/Dimension'
-// import colors from '../constants/Colors'
-// import { backarrow, eye } from '../assets/images'
-
-// const TextInputComponent = (props) => {
-//     const { rightComponent, rightStyle, value, onChangeText, editable, placeholder, keyboardType, containerStyle } = props
-//     return (
-//         <View style={{ borderWidth: 1, width: WIDTH * 0.9, borderRadius: WIDTH * 0.02, padding: HEIGHT * 0.02, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderColor: colors.grey, marginTop: HEIGHT * 0.02, backgroundColor: colors.lightgrey, ...containerStyle }}>
-//             <View style={{ justifyContent: "center", alignItems: "center" }}>
-//                 <TextInput 
-//                     placeholder={placeholder}
-//                     value={value}
-//                     editable={editable}
-//                     // textAlignVertical="top"
-//                     keyboardType={keyboardType}
-//                     onChangeText={onChangeText}
-//                     style={{ marginLeft: WIDTH * 0.02, width: WIDTH * 0.7, color: colors.black }}
-//                 />
-//             </View>
-//             {rightComponent && (
-//                 <Pressable style={{ position: "absolute", right: WIDTH * 0.02, ...rightStyle }}>
-//                     {rightComponent}
-//                 </Pressable>
-//             )}
-//         </View>
-//     )
-// }
-
-// export default TextInputComponent;

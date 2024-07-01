@@ -48,18 +48,7 @@ const WriteComponent = () => {
                 />
             </View>
             <View style={styles.dropdownContainer}>
-                {/* <DropDownPicker
-                    open={open}
-                    value={selectedFont}
-                    items={items}
-                    setOpen={setOpen}
-                    setValue={setSelectedFont}
-                    setItems={setItems}
-                    placeholder="Choose font"
-                    containerStyle={styles.dropdown}
-                    style={styles.dropdownList}
-                    dropDownContainerStyle={styles.dropdownList}
-                /> */}
+
                 <DropDownPicker
                     items={fontOptions}
                     defaultValue={selectedFont}

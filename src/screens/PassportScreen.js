@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, ScrollView, Pressable, Alert, Modal, Button, Platform } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, Image, ScrollView, Pressable, Alert, Modal, Platform } from 'react-native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -14,8 +14,7 @@ import UploadComponent from '../components/UploadComponent';
 import { backarrow, camera, cross, mark, passportdo, passportdont, upload } from '../assets/images';
 import { generateRandomFilename } from '../constants/Helpers';
 import WebView from 'react-native-webview';
-
-
+import * as FileSystem from 'expo-file-system';
 
 const passportInstruction = [
     { id: 1, image: passportdo, text: "Do it", markIcon: mark },
@@ -28,8 +27,9 @@ const instructionsData = [
     { id: 3, text: "Avoid glare or obstructions for accurate document capture" }
 ];
 
-const PassportScreen = () => {
+const PassportScreen = ({ route }) => {
     const navigation = useNavigation();
+    const isFocused = useIsFocused();
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [selectedDate, setSelectedDate] = useState('');
     const [fileFormat, setFileFormat] = useState(null);
@@ -38,6 +38,15 @@ const PassportScreen = () => {
     const [isPreviewVisible, setIsPreviewVisible] = useState(false);
     const [docName, setDocName] = useState(null);
     const [isPdfViewerVisible, setIsPdfViewerVisible] = useState(false);
+    const [imageDetails, setImageDetails] = useState(null);
+    const [savedFileName, setSavedFileName] = useState('');
+
+    useEffect(() => {
+        if (isFocused && route.params?.fileNames) {
+            setSavedFileName(route.params.fileNames[0]);
+            setImageUri(route.params.images[0].uri);
+        }
+    }, [isFocused, route.params]);
 
 
     const showDatePicker = () => {
@@ -55,36 +64,29 @@ const PassportScreen = () => {
     };
 
     const handleCameraPress = async () => {
-        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-        if (!permissionResult.granted) {
-            Alert.alert('Permission to access camera required.');
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission to access camera was denied');
             return;
         }
-
-        const imageResult = await ImagePicker.launchCameraAsync({
+        const result = await ImagePicker.launchCameraAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
-            aspect: [4, 3],
             quality: 1,
-            base64: false,
         });
 
-        if (!imageResult.canceled) {
-            const { uri, mimeType } = imageResult.assets[0];
-            if (uri) {
-                setFileFormat(mimeType || 'image/jpeg');
-                setImageUri(uri);
-                const newFileName = generateRandomFilename();
-                setImageFileName(newFileName);
-                setIsPreviewVisible(true);
-            } else {
-                Alert.alert('No URI found in the captured image.');
-            }
-        } else {
-            Alert.alert('Image capture cancelled.');
+        if (!result.cancelled) {
+            const uri = result.assets[0].uri;
+            setImageUri(uri);
+            const fileInfo = await FileSystem.getInfoAsync(uri);
+            const fileName = uri.split('/').pop();
+            const fileSize = fileInfo.size || 'N/A';
+            const type = 'image';
+
+            setImageDetails({ fileName, fileSize, type });
+            navigation.navigate('PreviewScreen', { images: [{ uri, fileName, fileSize, type }] });
         }
     };
-
 
     const handleDocumentPress = async () => {
         try {
@@ -92,11 +94,8 @@ const PassportScreen = () => {
                 type: ['application/pdf', 'image/*'],
             });
 
-            console.log('DocumentPicker result:', result);
-
             if (!result.canceled && result.assets && result.assets.length > 0) {
                 const { mimeType, name, uri } = result.assets[0];
-                console.log('Document details:', { name, uri, mimeType });
 
                 if (uri) {
                     setDocName(name);
@@ -107,7 +106,6 @@ const PassportScreen = () => {
                     Alert.alert('No URI found in the uploaded document.');
                 }
             } else if (result.canceled) {
-                console.log('Document upload cancelled by the user.');
                 Alert.alert('Document upload cancelled.');
             }
         } catch (error) {
@@ -116,10 +114,9 @@ const PassportScreen = () => {
         }
     };
 
-
     const togglePreviewModal = () => {
         setIsPreviewVisible(!isPreviewVisible);
-        setIsPdfViewerVisible(false); 
+        setIsPdfViewerVisible(false);
     };
 
     return (
@@ -193,18 +190,15 @@ const PassportScreen = () => {
                         <UploadComponent icon={upload} text="Upload Now" onPress={handleDocumentPress} />
                     </View>
 
-                    <View style={{ flexDirection: "row", alignItems: 'center', marginTop: HEIGHT * 0.01 }}>
-                        <MaterialIcons name="insert-drive-file" size={20} color={colors.orange} />
-                        {imageFileName && (
-                            <Text style={styles.fileFormatText}>{imageFileName}</Text>
-                        )}
-                        {docName && (
-                            <Text style={styles.fileFormatText}>{docName}</Text>
-                        )}
-                        <Pressable onPress={() => setIsPdfViewerVisible(true)}>
-                            <Text style={{ color: colors.blue, marginLeft: HEIGHT * 0.02 }}>Preview</Text>
-                        </Pressable>
-                    </View>
+                    {savedFileName && (
+                        <View style={{ flexDirection: "row", alignItems: 'center', marginTop: HEIGHT * 0.01 }}>
+                            <MaterialIcons name="insert-drive-file" size={20} color={colors.orange} />
+                            <Text style={{ color: colors.black, marginLeft: HEIGHT * 0.02 }}>{savedFileName}</Text>
+                            <Pressable onPress={() => navigation.navigate("PreviewScreen")}>
+                                <Text style={styles.previewStyle}>Preview</Text>
+                            </Pressable>
+                        </View>
+                    )}
 
                     <ButtonComponent
                         buttonValue="Next"
@@ -235,7 +229,6 @@ const PassportScreen = () => {
                         <Pressable style={{ backgroundColor: colors.orange, borderWidth: 0, padding: WIDTH * 0.03, borderRadius: 10 }} onPress={() => setIsPdfViewerVisible(false)}>
                             <Text>Close</Text>
                         </Pressable>
-                        {/* <Button title="Close" onPress={() => setIsPdfViewerVisible(false)} /> */}
                     </View>
                 </View>
             </Modal>
@@ -248,126 +241,120 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.white,
     },
+    buttonContainerStyle: {
+        marginTop: HEIGHT * 0.08
+    },
+    scrollContainer: {
+        paddingBottom: HEIGHT * 0.1,
+    },
     subContainer: {
         marginHorizontal: WIDTH * 0.05,
     },
-    buttonContainerStyle: {
-        marginTop: HEIGHT * 0.08,
-    },
-    scrollContainer: {
-        flexGrow: 1,
-        paddingBottom: HEIGHT * 0.05
-    },
     headerText: {
-        fontSize: 27,
-        fontWeight: '500',
-        width: WIDTH * 0.7,
-        marginTop: HEIGHT * 0.06,
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: colors.black,
+        marginTop: HEIGHT * 0.03
     },
     instructionStyle: {
-        marginTop: HEIGHT * 0.03,
+        marginBottom: HEIGHT * 0.02,
     },
     lineContainer: {
         flexDirection: 'row',
-        alignItems: 'flex-start',
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: HEIGHT * 0.01,
+        alignItems: 'center',
+        marginVertical: HEIGHT * 0.005,
     },
     bulletPoint: {
-        fontSize: 30,
+        fontSize: 24,
+        color: colors.lightBlack,
         marginRight: WIDTH * 0.02,
     },
     instructionText: {
-        flex: 1,
-        fontSize: 15,
+        fontSize: 16,
         color: colors.lightBlack,
-        textAlign: 'left',
+    },
+    flatlistStyle: {
+        marginVertical: HEIGHT * 0.02,
     },
     imageContainer: {
         flex: 1,
-        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: HEIGHT * 0.02,
-    },
-    flatlistStyle: {
-        marginTop: HEIGHT * 0.02
-    },
-    contentStyle: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginTop: HEIGHT * 0.01
+        margin: WIDTH * 0.02,
     },
     imageStyle: {
         width: WIDTH * 0.4,
-        height: HEIGHT * 0.2
+        height: HEIGHT * 0.2,
+    },
+    contentStyle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: HEIGHT * 0.01,
     },
     documentText: {
         fontSize: 18,
-        fontWeight: '500',
-        marginTop: HEIGHT * 0.02
-    },
-    nextButton: {
-        width: WIDTH * 0.89,
-        backgroundColor: colors.orange,
-        marginTop: HEIGHT * 0.04,
-    },
-    buttonText: {
-        color: colors.white,
+        fontWeight: 'bold',
+        color: colors.black,
+        marginBottom: HEIGHT * 0.02,
     },
     calenderStyle: {
-        marginRight: WIDTH * 0.01
-    },
-    uploadContainer: {
-        flex: 1,
-        alignItems: 'center',
         justifyContent: 'center',
-        marginTop: HEIGHT * 0.03
+        alignItems: 'center',
+        padding: 5,
     },
-    fileFormatText: {
-        color: colors.black
+    dateTimePicker: {
+        width: WIDTH,
+        backgroundColor: colors.white,
+    },
+    pickerContainer: {
+        backgroundColor: colors.white,
+    },
+    confirmText: {
+        color: colors.blue,
+    },
+    cancelText: {
+        color: colors.lightBlack,
     },
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
-        height: HEIGHT * 0.7,
-        width: WIDTH * 0.9,
-        backgroundColor: colors.lightBlack,
-        borderRadius: WIDTH * 0.02,
-        alignItems: "center"
+        width: WIDTH * 0.8,
+        height: HEIGHT * 0.8,
+        backgroundColor: colors.white,
+        borderRadius: 10,
+        padding: 20,
+        justifyContent: 'space-between',
     },
     modalHeaderText: {
         fontSize: 20,
         fontWeight: 'bold',
+        color: colors.black,
         marginBottom: 10,
     },
     previewImage: {
-        width: WIDTH * 0.8,
-        height: HEIGHT * 0.5,
-        marginBottom: 20,
-    },
-    pdfPreview: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: HEIGHT * 0.5,
-        marginBottom: 20,
-    },
-    pdfText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    buttonContainer: {
         width: '100%',
-        alignItems: 'center',
+        height: '80%',
+        marginBottom: 10,
     },
-    pickerContainer: {
+    buttonText: {
+        fontSize: 18,
+        color: colors.white,
+    },
+    nextButton: {
         backgroundColor: colors.orange,
-        color: colors.orange
+        borderRadius: 10,
+        paddingVertical: 10,
+        marginTop: HEIGHT * 0.02,
+    },
+    previewStyle: {
+        fontSize: 15,
+        color: colors.blue,
+        marginHorizontal: WIDTH * 0.03
     }
 });
 
 export default PassportScreen;
+

@@ -10,6 +10,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import ButtonComponent from '../components/ButtonComponent';
 import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system'; 
+
 
 const avatarFlatlist = [
     { id: 'uploadButton', icon: uploadcamera, isUploadButton: true },
@@ -43,11 +45,9 @@ const ProfilePictureScreen = () => {
     const [selectedColor, setSelectedColor] = useState(null);
 
 
-    console.log("profileImage===>", profileImage);
-
     useEffect(() => {
-        console.log('selectedImage changed:', selectedImage);
-    }, [selectedImage]);
+        console.log("profileImage===>", profileImage);
+    }, [profileImage]);
 
     const selectImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -67,7 +67,6 @@ const ProfilePictureScreen = () => {
             setSelectedImage(result.uri);
             setModalVisible(false);
             setSecondEditingVisible(true);
-            console.log("selectedImage===>", result.uri);
         }
     };
 
@@ -84,11 +83,10 @@ const ProfilePictureScreen = () => {
         });
         if (!result.canceled) {
             setSelectedAvatar(null);
-            setSelectedImage(result.assets[0].uri);
+            setProfileImage(result.assets[0].uri);
             setModalVisible(false);
             setSecondEditingVisible(true);
             console.log(selectedImage);
-            console.log("selectedImage===>", result.uri);
         }
     };
 
@@ -107,36 +105,11 @@ const ProfilePictureScreen = () => {
         setProfileImage(selectedImage);
         setSecondEditingVisible(false);
     };
+
     const accessportalNavigate = () => {
         navigation.navigate("AccessPortalScreen")
     }
 
-
-    const handleCrop = async () => {
-        try {
-            console.log('Selected image:', profileImage);
-            if (profileImage) {
-                const { width, height } = await getImageSize(profileImage);
-                const cropWidth = width;
-                const cropHeight = height / 1.5;
-                const croppedImage = await ImageManipulator.manipulateAsync(
-                    profileImage,
-                    [{ crop: { originX: 0, originY: 0, width: cropWidth, height: cropHeight } }],
-                    { compress: 1, format: ImageManipulator.SaveFormat.PNG }
-                );
-
-                console.log('Cropped image:', croppedImage);
-                setProfileImage(croppedImage.uri);
-                setModalVisible(false);
-            } else {
-                console.warn('Selected image is null or undefined');
-            }
-        } catch (error) {
-            console.error('Error cropping image:', error);
-        }
-    };
-
-    // Function to get image dimensions
     const getImageSize = (uri) => {
         return new Promise((resolve, reject) => {
             Image.getSize(uri, (width, height) => {
@@ -179,83 +152,7 @@ const ProfilePictureScreen = () => {
         }
     };
 
-    // const handleColorSelect = async (color) => {
-    //     setSelectedColor(color);
 
-    //     if (profileImage) {
-    //         try {
-    //             const result = await removeImageBackground(profileImage, color);
-    //             setProfileImage(result.uri);
-    //         } catch (error) {
-    //             Alert.alert('Error', 'Failed to change background. Please try again.');
-    //         }
-    //     } else {
-    //         Alert.alert('No Image', 'Please select an image first.');
-    //     }
-    // };
-
-    const handleColorSelect = async (color) => {
-        setSelectedColor(color);
-
-        if (profileImage) {
-            try {
-                const { width, height } = await getImageSize(profileImage);
-                const cropWidth = width;
-                const cropHeight = height / 1.5;
-                const croppedImage = await ImageManipulator.manipulateAsync(
-                    profileImage,
-                    [{ crop: { originX: 0, originY: 0, width: cropWidth, height: cropHeight } }],
-                    { compress: 1, format: ImageManipulator.SaveFormat.PNG }
-                );
-                const result = await removeImageBackground(croppedImage.uri, color);
-                setProfileImage(result.uri);
-
-                setModalVisible(false); // Close color selection modal if needed
-            } catch (error) {
-                console.error('Error applying background color:', error);
-                Alert.alert('Error', 'Failed to change background. Please try again.');
-            }
-        } else {
-            Alert.alert('No Image', 'Please select an image first.');
-        }
-    };
-
-
-    const removeImageBackground = async (imageUri, backgroundColor) => {
-        const apiUrl = 'https://aiengine.impetorshr.com/api/remove-image-background/';
-
-        try {
-            const formData = new FormData();
-            formData.append('image_file', {
-                uri: imageUri,
-                type: 'image/png',
-                name: 'image.png',
-            });
-            formData.append('background_color', backgroundColor); // Append the background color
-
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'multipart/form-data',
-                },
-                body: formData,
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                console.log('Background changed successfully:', result);
-                return result;
-            } else {
-                console.error('Failed to change background:', result);
-                throw new Error(result.message || 'Failed to change background');
-            }
-        } catch (error) {
-            console.error('Error changing background:', error);
-            throw error;
-        }
-    };
 
 
     return (
@@ -357,15 +254,16 @@ const ProfilePictureScreen = () => {
                             width: '100%',
                         }}>
                             <Text style={{ fontSize: 20, fontWeight: '500', marginBottom: HEIGHT * 0.01 }}>Edit Profile</Text>
-                            <View style={{ borderWidth: 1, borderColor: colors.orange, height: WIDTH * 0.7, width: WIDTH * 0.8, alignItems: 'center', justifyContent: "center", borderRadius: 8 }}>
+                            <View style={{ borderWidth: 1, borderColor: colors.orange, height: WIDTH * 0.7, width: WIDTH * 0.8, alignItems: 'center', justifyContent: "center", borderRadius: 0, }}>
 
                                 <Image
                                     source={profileImage ? { uri: profileImage } : null}
                                     resizeMode='cover'
                                     style={styles.editingIcon}
                                 />
-
                             </View>
+
+
                             <View style={{ marginTop: HEIGHT * 0.01 }}>
                                 <Text style={{ fontWeight: '500', fontSize: 15 }}>Change Background- <Text style={{ fontWeight: '400', fontSize: 15 }}>Choose Colour</Text></Text>
                                 <View>
@@ -388,9 +286,9 @@ const ProfilePictureScreen = () => {
                                 </View>
                             </View>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10 }}>
-                                <Pressable onPress={handleCrop} >
+                                {/* <Pressable onPress={handleCrop} >
                                     <MaterialIcons name="crop" size={20} color={colors.black} />
-                                </Pressable>
+                                </Pressable> */}
                                 <Pressable onPress={handleFlip} >
                                     <MaterialIcons name="flip" size={20} color={colors.black} />
                                 </Pressable>
@@ -551,7 +449,8 @@ const styles = StyleSheet.create({
     editingIcon: {
         height: WIDTH * 0.7,
         width: WIDTH * 0.8,
-        borderRadius: 8
+        borderRadius: 8,
+        alignItems: 'center'
     },
     tickIcon: {
         position: 'absolute',
@@ -574,6 +473,12 @@ const styles = StyleSheet.create({
         height: 30,
         borderRadius: 25,
         marginHorizontal: 10,
+    },
+    selectedImage: {
+        width: WIDTH * 0.8,
+        height: HEIGHT * 0.4,
+        borderRadius: 10,
+        marginBottom: 20,
     },
 
 });

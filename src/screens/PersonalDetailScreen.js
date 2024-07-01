@@ -114,7 +114,7 @@ const PersonalDetailScreen = () => {
                                 value={postcode}
                                 onChangeText={setPostcode}
                                 rightComponent={
-                                    <TouchableOpacity onPress={handleLookupPress} style={{ borderWidth: 1 }}>
+                                    <TouchableOpacity onPress={handleLookupPress} style={{ backgroundColor: colors.orange, padding: HEIGHT * 0.01, borderRadius: WIDTH * 0.01 }}>
                                         <Text style={styles.lookupText}>Lookup</Text>
                                     </TouchableOpacity>
                                 }

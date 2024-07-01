@@ -10,7 +10,7 @@ const SplashScreen = () => {
 
     useEffect(() => {
         setTimeout(() => {
-            navigation.navigate("PassportScreen")
+            navigation.navigate("UniqueIdScreen")
         }, 4000)
     }, [])
 

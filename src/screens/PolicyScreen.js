@@ -9,7 +9,7 @@ import DrawComponent from '../components/DrawComponent';
 import WriteComponent from '../components/WriteComponent';
 import ButtonComponent from '../components/ButtonComponent';
 // import PDFView from 'react-native-view-pdf/lib/index';
-import PDFView from 'react-native-view-pdf';
+// import PDFView from 'react-native-view-pdf';
 
 
 const PolicyScreen = () => {
@@ -36,14 +36,14 @@ const PolicyScreen = () => {
                 <Text style={styles.mainText}>Social Media Policy</Text>
                 <Text style={styles.subText}>Through sign in you are agreeing to the policy</Text>
                 <ScrollView style={styles.pdfContainer}>
-                    <PDFView
+                    {/* <PDFView
                         fadeInDuration={250.0}
                         style={{ flex: 1 }}
                         resource={resources[resourceType]}
                         resourceType={resourceType}
                         onLoad={() => console.log(`PDF rendered from ${resourceType}`)}
                         onError={(error) => console.log('Cannot render PDF', error)}
-                    />
+                    /> */}
                 </ScrollView>
                 <View style={{ flexDirection: 'row', marginVertical: HEIGHT * 0.02 }}>
                     <Pressable
