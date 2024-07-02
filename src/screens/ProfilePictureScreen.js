@@ -11,7 +11,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import ButtonComponent from '../components/ButtonComponent';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system'; 
-
+import { ColorPickerWheel } from 'react-native-color-picker-wheel';
 
 const avatarFlatlist = [
     { id: 'uploadButton', icon: uploadcamera, isUploadButton: true },
@@ -44,6 +44,7 @@ const ProfilePictureScreen = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedColor, setSelectedColor] = useState(null);
     const [backgroundColor, setBackgroundColor] = useState(null);
+    const [colorPickerModalVisible, setColorPickerModalVisible] = useState(false);
 
 
     useEffect(() => {
@@ -103,7 +104,7 @@ const ProfilePictureScreen = () => {
     };
 
     const handleEditingDone = () => {
-        setProfileImage(selectedImage);
+        setProfileImage(profileImage);
         setSecondEditingVisible(false);
     };
 
@@ -347,8 +348,6 @@ const ProfilePictureScreen = () => {
                                     style={styles.editingIcon}
                                 />
                             </View>
-
-
                             <View style={{ marginTop: HEIGHT * 0.01 }}>
                                 <Text style={{ fontWeight: '500', fontSize: 15 }}>Change Background- <Text style={{ fontWeight: '400', fontSize: 15 }}>Choose Colour</Text></Text>
                                 <View>
@@ -380,7 +379,9 @@ const ProfilePictureScreen = () => {
                                 <Pressable onPress={handleRotate}>
                                     <MaterialIcons name="rotate-right" size={20} color={colors.black} />
                                 </Pressable>
-
+                                <Pressable style={styles.editingButton} onPress={() => setColorPickerModalVisible(true)}>
+                                    <MaterialIcons name="color-lens" size={24} color={colors.black} />
+                                </Pressable>
                             </View>
                             <ButtonComponent
                                 buttonValue="Next"
@@ -391,6 +392,9 @@ const ProfilePictureScreen = () => {
                         </Pressable>
                     </View>
                 </Modal>
+
+
+
 
                 <View style={{ justifyContent: "flex-end", bottom: 10 }}>
                     <ButtonComponent
