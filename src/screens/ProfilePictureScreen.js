@@ -305,6 +305,7 @@ const ProfilePictureScreen = () => {
                                 <Pressable
                                     style={[styles.button, styles.buttonClose]}
                                     onPress={selectImage}>
+
                                     <MaterialIcons name="upload" size={20} color={colors.black} />
                                     <Text style={styles.textStyle}>Upload</Text>
                                 </Pressable>
