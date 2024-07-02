@@ -43,6 +43,7 @@ const ProfilePictureScreen = () => {
     const [selectedAvatarId, setSelectedAvatarId] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedColor, setSelectedColor] = useState(null);
+    const [backgroundColor, setBackgroundColor] = useState(null);
 
 
     useEffect(() => {
@@ -152,8 +153,90 @@ const ProfilePictureScreen = () => {
         }
     };
 
+    const handleColorSelect = async (color) => {
+        setSelectedColor(color);
 
+        if (profileImage) {
+            try {
+                const { width, height } = await getImageSize(profileImage);
+                const cropWidth = width;
+                const cropHeight = height / 1.5;
+                const croppedImage = await ImageManipulator.manipulateAsync(
+                    profileImage,
+                    [{ crop: { originX: 0, originY: 0, width: cropWidth, height: cropHeight } }],
+                    { compress: 1, format: ImageManipulator.SaveFormat.PNG }
+                );
+                const result = await removeImageBackground(croppedImage.uri, color);
+                setProfileImage(result.uri);
 
+                setModalVisible(false); // Close color selection modal if needed
+            } catch (error) {
+                console.error('Error applying background color:', error);
+                Alert.alert('Error', 'Failed to change background. Please try again.');
+            }
+        } else {
+            Alert.alert('No Image', 'Please select an image first.');
+        }
+    };
+
+    const removeImageBackground = async (imageUri, backgroundColor) => {
+        const apiUrl = 'https://aiengine.impetorshr.com/api/remove-image-background/';
+
+        try {
+            const formData = new FormData();
+            formData.append('image_file', {
+                uri: imageUri,
+                type: 'image/png',
+                name: 'image.png',
+            });
+            formData.append('background_color', backgroundColor);
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'multipart/form-data',
+                },
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                console.log('Background changed successfully:', result);
+
+                // Decode base64 and save the file
+                const base64Data = result.processed_image;
+                const filePath = `${FileSystem.documentDirectory}/profile_image.png`;
+
+                await FileSystem.writeAsStringAsync(filePath, base64Data, {
+                    encoding: FileSystem.EncodingType.Base64,
+                });
+
+                // Check the image format using file metadata
+                try {
+                    const fileInfo = await FileSystem.getInfoAsync(filePath);
+                    console.log('File MIME type:', fileInfo.mimeType);
+
+                    if (fileInfo.mimeType === 'image/png') {
+                        console.log('Image format is PNG');
+                    } else {
+                        console.log('Image format is not PNG');
+                    }
+                } catch (error) {
+                    console.error('Error getting file info:', error);
+                }
+
+                return { uri: filePath };
+            } else {
+                console.error('Failed to change background:', result);
+                throw new Error(result.message || 'Failed to change background');
+            }
+        } catch (error) {
+            console.error('Error changing background:', error);
+            throw error;
+        }
+    };
 
     return (
         <View style={styles.mainContainer}>
@@ -252,6 +335,7 @@ const ProfilePictureScreen = () => {
                             elevation: 5,
                             height: HEIGHT * 0.7,
                             width: '100%',
+                            // alignItems: "center"
                         }}>
                             <Text style={{ fontSize: 20, fontWeight: '500', marginBottom: HEIGHT * 0.01 }}>Edit Profile</Text>
                             <View style={{ borderWidth: 1, borderColor: colors.orange, height: WIDTH * 0.7, width: WIDTH * 0.8, alignItems: 'center', justifyContent: "center", borderRadius: 0, }}>
